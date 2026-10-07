@@ -1,0 +1,56 @@
+# Postgres EN EL CLÚSTER (alternativa si no usas una base gestionada).
+# Para producción se recomienda una base gestionada (RDS/Cloud SQL) y
+# apuntar DATABASE_URL del Secret hacia ella.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secrets
+type: Opaque
+stringData:
+  POSTGRES_USER: 'app'
+  POSTGRES_PASSWORD: 'cambia-esto'
+  POSTGRES_DB: 'phishing'
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels: { app: postgres }
+  template:
+    metadata:
+      labels: { app: postgres }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-bookworm
+          envFrom:
+            - secretRef: { name: postgres-secrets }
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+              subPath: pgdata
+          readinessProbe:
+            exec: { command: ['pg_isready', '-U', 'app'] }
+            periodSeconds: 10
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: ['ReadWriteOnce']
+        resources:
+          requests: { storage: 10Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  clusterIP: None
+  selector: { app: postgres }
+  ports:
+    - port: 5432

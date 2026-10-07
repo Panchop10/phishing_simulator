@@ -1,0 +1,17 @@
+node_modules
+.next
+.git
+.gitignore
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.override.yml
+npm-debug.log*
+.env
+.env.*
+README.md
+k8s
+coverage
+.vscode
+.DS_Store
+**/*.test.ts

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phishing-sim
+  labels: { app: phishing-sim }
+spec:
+  replicas: 1 # worker de envío en el proceso -> exactamente una réplica
+  strategy:
+    type: Recreate # el pod viejo termina antes de crear el nuevo (nunca dos a la vez)
+  selector:
+    matchLabels: { app: phishing-sim }
+  template:
+    metadata:
+      labels: { app: phishing-sim }
+    spec:
+      terminationGracePeriodSeconds: 60 # margen para el apagado ordenado del worker
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      initContainers:
+        - name: migrate
+          image: registry.example.com/phishing-sim:latest
+          command: ['node', 'node_modules/prisma/build/index.js', 'migrate', 'deploy']
+          envFrom:
+            - secretRef: { name: phishing-sim-secrets }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ['ALL'] }
+      containers:
+        - name: app
+          image: registry.example.com/phishing-sim:latest
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef: { name: phishing-sim-config }
+            - secretRef: { name: phishing-sim-secrets }
+          resources:
+            requests: { cpu: '250m', memory: '256Mi' }
+            limits: { cpu: '1', memory: '512Mi' }
+          lifecycle:
+            preStop:
+              exec: { command: ['sleep', '5'] } # drena endpoints antes del SIGTERM
+          startupProbe:
+            httpGet: { path: /api/health, port: 3000 }
+            failureThreshold: 30
+            periodSeconds: 2
+          livenessProbe:
+            httpGet: { path: /api/health, port: 3000 } # solo proceso vivo (sin BD)
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet: { path: /api/health/ready, port: 3000 } # BD + bandera de apagado
+            periodSeconds: 5
+            failureThreshold: 2
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ['ALL'] }

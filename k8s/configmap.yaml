@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: phishing-sim-config
+data:
+  NODE_ENV: 'production'
+  PORT: '3000'
+  # URL pública: debe coincidir con el host del Ingress (los enlaces de rastreo
+  # se construyen con ella). También puede ajustarse luego en Configuración.
+  APP_BASE_URL: 'https://sim.empresa.cl'

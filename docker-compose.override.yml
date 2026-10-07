@@ -1,0 +1,11 @@
+# Override de DESARROLLO (docker compose lo aplica automáticamente):
+# agrega un capturador de correo (Mailpit) para probar envíos sin un SMTP real.
+#   - SMTP de prueba:   host "mailpit", puerto 1025, sin usuario/clave
+#   - Bandeja web:      http://localhost:8025
+services:
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - '8025:8025' # interfaz web
+      - '1025:1025' # endpoint SMTP
