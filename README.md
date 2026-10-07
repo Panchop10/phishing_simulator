@@ -81,6 +81,32 @@ npm run prisma:deploy   # aplica migraciones
 npm run dev
 ```
 
+## Datos de ejemplo (demo)
+
+Para revisar el panel y los informes sin crear datos a mano, puedes cargar un
+conjunto de ejemplo: **5 plantillas** en español y **2 campañas ya "enviadas"** con
+resultados ficticios (aperturas, clics y fallos repartidos en el tiempo para que el
+embudo y la línea de tiempo se vean reales).
+
+Con Docker (contenedores en ejecución):
+
+```bash
+make seed
+# equivale a: docker compose exec -T app node scripts/seed-demo.mjs
+```
+
+Sin Docker (con `DATABASE_URL` definido y migraciones aplicadas):
+
+```bash
+npm run seed
+```
+
+Es re-ejecutable: recrea las campañas llamadas «Campaña de ejemplo — …» con números
+nuevos y **no duplica ni borra** tus propias plantillas. Las campañas de ejemplo
+quedan en estado «Enviada» con destinatarios ficticios `@empresa.cl`, por lo que
+**nunca** se envían correos reales. Para quitarlas, usa el ícono de papelera en cada
+campaña.
+
 ## Despliegue en Kubernetes
 
 Manifiestos en [`k8s/`](k8s/):
@@ -152,6 +178,7 @@ Next). Su corrección exige saltos de versión mayores (Tailwind 4 / Next 16).
 ```bash
 make up      # = ./start.sh (app + base de datos)
 make dev     # app + base de datos + Mailpit
+make seed    # carga datos de ejemplo (plantillas + campañas con resultados)
 make logs    # registros de la app
 make down    # detener
 make clean   # detener y borrar volúmenes (¡borra la base de datos!)
